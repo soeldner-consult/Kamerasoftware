@@ -42,6 +42,12 @@ typedef int(__cdecl * TGetFrameSize)(int *pWidth, int *pHeight, int *pX, int *pY
 typedef int(__cdecl * TLoadCalibration)(const char *);
 typedef int(__cdecl * TGetCalibrationInfo)(TPyroCamCalibrationInfo& Info);
 
+//---- Backlight Suppression Settings ----
+typedef int(__cdecl * TSetBacklightSuppressionThreshold)(int ThresValue);
+typedef int(__cdecl * TGetBacklightSuppressionThreshold)(int *pThresValue);
+typedef int(__cdecl * TSetBacklightSuppressionClampMode)(int Mode);
+typedef int(__cdecl * TGetBacklightSuppressionClampMode)(int *pMode);
+typedef int(__cdecl * TSetBacklightSuppression)(int Mode);
 
 
 namespace CppCLR_WinformsProjekt {
@@ -56,7 +62,7 @@ namespace CppCLR_WinformsProjekt {
 	using namespace System::Threading;
 
 	/// <summary>
-	/// Zusammenfassung für Form1
+	/// Zusammenfassung fÃ¼r Form1
 	/// </summary>
 	public ref class Form1 : public System::Windows::Forms::Form
 	{
@@ -85,6 +91,14 @@ namespace CppCLR_WinformsProjekt {
 
 		TGetFrameSize pGetFrame;
 		TSetFrameSize pSetFrame;
+
+		TSetBacklightSuppressionThreshold pSetBacklightSuppressionThreshold;
+		TGetBacklightSuppressionThreshold pGetBacklightSuppressionThreshold;
+		TSetBacklightSuppression pSetBacklightSuppression;
+		TSetBacklightSuppressionClampMode pSetBacklightSuppressionClampMode;
+		TGetBacklightSuppressionClampMode pGetBacklightSuppressionClampMode;
+
+
 	private: System::Windows::Forms::GroupBox^  groupBox1;
 	private: System::Windows::Forms::TextBox^  textBox7;
 	private: System::Windows::Forms::Label^  label27;
@@ -123,6 +137,13 @@ namespace CppCLR_WinformsProjekt {
 
 			this->pGetFrame = (TGetFrameSize)GetProcAddress(hDLL, "GetFrame");
 			this->pSetFrame = (TSetFrameSize)GetProcAddress(hDLL, "SetFrame");
+			
+			this->pSetBacklightSuppressionThreshold = (TSetBacklightSuppressionThreshold)GetProcAddress(hDLL, "Set Backlight Suppression Threhold");
+			this->pGetBacklightSuppressionThreshold = (TGetBacklightSuppressionThreshold)GetProcAddress(hDLL, "Get Backlight Suppression Threshold");
+			this->pGetBacklightSuppressionClampMode = (TGetBacklightSuppressionClampMode)GetProcAddress(hDLL, "Get Backlight Suppression Clamp Mode");
+			this->pSetBacklightSuppressionClampMode = (TSetBacklightSuppressionClampMode)GetProcAddress(hDLL, "Set Backlight Suppression Clamp Mode");
+			this->pSetBacklightSuppression = (TSetBacklightSuppression)GetProcAddress(hDLL, "Set Backlight Suppression");
+
 
 		}
 
@@ -206,8 +227,8 @@ namespace CppCLR_WinformsProjekt {
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
-		/// Erforderliche Methode für die Designerunterstützung.
-		/// Der Inhalt der Methode darf nicht mit dem Code-Editor geändert werden.
+		/// Erforderliche Methode fÃ¼r die DesignerunterstÃ¼tzung.
+		/// Der Inhalt der Methode darf nicht mit dem Code-Editor geÃ¤ndert werden.
 		/// </summary>
 		void InitializeComponent(void)
 		{
@@ -746,7 +767,7 @@ namespace CppCLR_WinformsProjekt {
 			this->label24->Name = L"label24";
 			this->label24->Size = System::Drawing::Size(89, 13);
 			this->label24->TabIndex = 50;
-			this->label24->Text = L"Temp. value [°C]:";
+			this->label24->Text = L"Temp. value [Â°C]:";
 			// 
 			// label25
 			// 
@@ -942,9 +963,7 @@ private: System::Void button1_Click(System::Object^  sender, System::EventArgs^ 
 	error = pSetFrame(Width, Height, X, Y);
 
 	//error = pGetFrame(&Form1->Width, &Height, &X, &Y);
-	/*int ThresValue = trackBar4->Value;
-	int* threValue = &ThresValue;
-	error = GetBacklightSuppressionThreshold(threValue);*/
+	
 
 	textBox1->AppendText("Start Image Streaming ..." + Environment::NewLine);
 	error = pStartStreaming();
@@ -963,7 +982,11 @@ private: System::Void button1_Click(System::Object^  sender, System::EventArgs^ 
 
 	Thread^ newThread = gcnew Thread(gcnew ThreadStart(this, &Form1::image_Capture));
 	newThread->Start();
+	//Thread^ t = gcnew Thread(gcnew ThreadStart(obj->image_Capture));
+	//t->Start();
 	
+
+
 
 }
 
@@ -1029,12 +1052,21 @@ private: System::Void textBox6_TextChanged(System::Object^  sender, System::Even
 }
 private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
 	streaming = false;
-	//pCloseDevice();
+	pCloseDevice();
 	textBox1->AppendText("Stopped Streaming");
 }
 private: System::Void button7_Click(System::Object^  sender, System::EventArgs^  e) {
 }
 private: System::Void button4_Click(System::Object^  sender, System::EventArgs^  e) {
+	int ThresValue = trackBar4->Value;
+	//int* threValue = &ThresValue;
+	error = pSetBacklightSuppressionThreshold(trackBar4->Value);  // GetBacklightSuppressionThreshold(threValue);
+
+	if (error == OK)
+		textBox1->AppendText = "Backlight Suppression Threshold Value = " + trackBar4->Value.ToString();
+	else {
+		textBox1->AppendText = "FAIL - Error Code: " + System::Convert::ToString(error);
+	}
 }
 private: System::Void button8_Click(System::Object^  sender, System::EventArgs^  e) {
 }
